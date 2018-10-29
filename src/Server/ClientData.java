@@ -1,5 +1,6 @@
-package Client;
+package Server;
 
+import Client.Client;
 import Message.SimpleMessage;
 import java.util.LinkedList;
 

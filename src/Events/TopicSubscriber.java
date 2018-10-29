@@ -1,5 +1,7 @@
 package Events;
 
+import Message.Topic;
+
 public interface TopicSubscriber {
-    public void receiveTopic();
+    public void receiveTopic(Topic topic);
 }
