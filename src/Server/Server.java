@@ -7,6 +7,7 @@ import Message.Message;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 import Message.Topic;
 
@@ -36,7 +37,7 @@ public class Server implements Sender {
 
 	private void serve(){
 		while(serverIsOn){
-			//do server stuff
+			topicList.stream().forEach(topic -> eventManager.publishTopic(topic));
 		}
 	}
 
@@ -44,11 +45,10 @@ public class Server implements Sender {
 		this.eventManager.subscribe(subscriber, tag);
 	}
 
-	public boolean setup(Date maxDate, int maxQueue){
+	public void setup(Date maxDate, int maxQueue){
 		this.maxDateExpiration = maxDate;
 		this.maxQueueLength = maxQueue;
 
-		return true;
 	}
 
 	@Override
