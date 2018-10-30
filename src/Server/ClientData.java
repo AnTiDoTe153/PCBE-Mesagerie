@@ -21,7 +21,7 @@ public class ClientData {
         this.messageQueue.addFirst(message);
     }
 
-    public SimpleMessage popMessageFromQueue(SimpleMessage message){
+    public SimpleMessage popMessageFromQueue(){
         return this.messageQueue.removeLast();
     }
 }

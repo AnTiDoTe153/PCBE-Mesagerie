@@ -16,13 +16,17 @@ public class Client implements Receiver, TopicSubscriber {
         this.server = Server.getInstance();
     }
 
+    public String getUsername(){
+        return username;
+    }
+
     @Override
     public void receive(Message message) {
-        return;
+        message.displayMessage();
     }
 
     @Override
     public void receiveTopic(Topic topic) {
-
+        topic.displayMessage();
     }
 }

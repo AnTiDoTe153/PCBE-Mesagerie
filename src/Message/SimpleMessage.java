@@ -4,22 +4,25 @@ import Message.Message;
 
 public class SimpleMessage extends Message {
     private final static String MESSAGE_TYPE = "SimpleMessage";
-    private String userId;
+    private String receiverUserId;
+    private String senderUserId;
 
-    public SimpleMessage(String message, String userId){
+    public SimpleMessage(String message, String senderUserId, String receiverUserId){
         super(message, MESSAGE_TYPE);
-        this.userId = userId;
+        this.receiverUserId = receiverUserId;
+        this.senderUserId = senderUserId;
     }
 
     public void displayMessage(){
         System.out.println("[" + this.getType() + "]" + this.getMessageText());
     }
 
-    public String getUserId() {
-        return userId;
+    public String getReceiverUserId() {
+        return receiverUserId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public String getSenderUserId() {
+        return senderUserId;
     }
+
 }

@@ -1,9 +1,10 @@
 package Server;
 
+import Client.Client;
 import Events.EventManager;
 import Events.TopicSubscriber;
 import Interfaces.Sender;
-import Message.Message;
+import Message.SimpleMessage;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -38,6 +39,13 @@ public class Server implements Sender {
 	private void serve(){
 		while(serverIsOn){
 			topicList.stream().forEach(topic -> eventManager.publishTopic(topic));
+			clientMap.entrySet().stream().forEach(item -> {
+				ClientData data = item.getValue();
+				Client client = data.getClient();
+				SimpleMessage message = data.popMessageFromQueue();
+
+				client.receive(message);
+			});
 		}
 	}
 
@@ -45,17 +53,32 @@ public class Server implements Sender {
 		this.eventManager.subscribe(subscriber, tag);
 	}
 
+
+
 	public void setup(Date maxDate, int maxQueue){
 		this.maxDateExpiration = maxDate;
 		this.maxQueueLength = maxQueue;
+	}
 
+	public void publishTopic(Topic topic){
+		topicList.add(topic);
+	}
+
+	public void logIn(Client client){
+		ClientData clientData = new ClientData(client);
+		clientMap.put(client.getUsername(), clientData);
+	}
+
+	public void logOut(Client client){
+		clientMap.remove(client.getUsername());
 	}
 
 	@Override
-	public synchronized void send(Message message) {
-		// TODO Auto-generated method stub
-		// Only one message can be sent at a time
-		
+	public void send(SimpleMessage message) {
+		if(clientMap.containsKey(message.getReceiverUserId())){
+			ClientData clientData = clientMap.get(message.getReceiverUserId());
+			clientData.addMessageToQueue(message);
+		}
 	}
 
 	public void setServerIsOn(boolean serverIsOn){

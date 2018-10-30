@@ -1,7 +1,8 @@
 package Interfaces;
 
-import Message.Message;
+import Message.SimpleMessage;
+import Server.ClientData;
 
 public interface Sender {
-	public void send(Message message);
+	public void send(SimpleMessage message);
 }
