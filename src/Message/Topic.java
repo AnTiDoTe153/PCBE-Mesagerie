@@ -8,12 +8,14 @@ public class Topic extends Message {
 
     private static String MESSAGE_TYPE = "Topic";
     private String tag;
-    private Date expirationDate;
+    private long lifeSpan;
+    private Date creationDate;
 
-    public Topic(String message, String tag, Date expirationDate){
+    public Topic(String message, String tag, int lifeSpan){
         super(message, MESSAGE_TYPE);
         this.tag = tag;
-        this.expirationDate = expirationDate;
+        this.lifeSpan = lifeSpan * 1000 * 3600;
+        this.creationDate = new Date();
     }
 
     public void displayMessage(){
@@ -24,15 +26,9 @@ public class Topic extends Message {
         return tag;
     }
 
-    public void setTag(String tag) {
-        this.tag = tag;
+    public long getLifeSpan() {
+        return lifeSpan;
     }
 
-    public Date getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(Date expirationDate) {
-        this.expirationDate = expirationDate;
-    }
+    public Date getCreationDate(){ return creationDate; }
 }

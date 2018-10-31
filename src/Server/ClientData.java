@@ -24,4 +24,8 @@ public class ClientData {
     public SimpleMessage popMessageFromQueue(){
         return this.messageQueue.removeLast();
     }
+
+    public int getQueueLength(){
+        return messageQueue.size();
+    }
 }
