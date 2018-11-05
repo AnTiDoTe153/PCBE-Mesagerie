@@ -5,13 +5,14 @@ import java.util.concurrent.Semaphore;
 final public class AdjustableSemaphore {
 
     private final ResizeableSemaphore semaphore;
-    private int maxPermits = 0;
+    private int maxPermits;
 
-    public AdjustableSemaphore() {
+    public AdjustableSemaphore(int maxPermits) {
         semaphore = new ResizeableSemaphore();
+        this.maxPermits = maxPermits;
     }
 
-    synchronized void setMaxPermits(int newMax) {
+    public synchronized void setMaxPermits(int newMax) {
         if (newMax < 1) {
             throw new IllegalArgumentException("Semaphore size must be at least 1");
         }
@@ -27,11 +28,15 @@ final public class AdjustableSemaphore {
         this.maxPermits = newMax;
     }
 
-    void release() {
+    public void drainPermits(){
+        this.semaphore.drainPermits();
+    }
+
+    public void release() {
         this.semaphore.release();
     }
 
-    void acquire() throws InterruptedException {
+    public void acquire() throws InterruptedException {
         this.semaphore.acquire();
     }
 

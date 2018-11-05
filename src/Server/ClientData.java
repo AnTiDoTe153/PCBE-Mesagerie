@@ -3,8 +3,11 @@ package Server;
 import Client.Client;
 import Message.SimpleMessage;
 import java.util.LinkedList;
+import java.util.concurrent.Semaphore;
 
 public class ClientData {
+    private static int maxLength = 10;
+    private static Semaphore mutex = new Semaphore(1, true);
     private Client client;
     private LinkedList<SimpleMessage> messageQueue;
 
@@ -17,15 +20,40 @@ public class ClientData {
         return client;
     }
 
-    public void addMessageToQueue(SimpleMessage message){
-        this.messageQueue.addFirst(message);
+    public static void setMaxLength(int maxLength){
+        try{
+            mutex.acquire();
+            ClientData.maxLength = maxLength;
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }finally{
+            mutex.release();
+        }
     }
 
-    public SimpleMessage popMessageFromQueue(){
-        return this.messageQueue.removeLast();
+    public synchronized void addMessageToQueue(SimpleMessage message){
+        int maxLengthValue = 0;
+        try{
+            mutex.acquire();
+            maxLengthValue = maxLength;
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }finally{
+            mutex.release();
+        }
+
+        if(this.messageQueue.size() < maxLengthValue){
+            this.messageQueue.addFirst(message);
+        }
     }
 
-    public int getQueueLength(){
-        return messageQueue.size();
+    public synchronized LinkedList<SimpleMessage> popMessagesFromQueue(){
+        LinkedList<SimpleMessage> resultList = new LinkedList<>();
+
+            while(!messageQueue.isEmpty()){
+                resultList.add(messageQueue.removeLast());
+            }
+
+        return resultList;
     }
 }

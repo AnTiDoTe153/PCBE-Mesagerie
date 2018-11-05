@@ -1,6 +1,7 @@
 package Server;
 
 import Client.Client;
+import CustomSemaphores.AdjustableSemaphore;
 import Events.EventManager;
 import Events.TopicSubscriber;
 import Interfaces.Sender;
@@ -14,13 +15,12 @@ import java.util.stream.Collectors;
 import Message.Topic;
 
 public class Server implements Sender {
-	private static long DEFAULT_LIFE_SPAN = 3600 * 1000;
-	private static int DEFAULT_MAX_LENGTH = 10;
+	private static final long DEFAULT_LIFE_SPAN = 3600 * 1000;
+	private static final boolean DEFAULT_SERVER_STATE = true;
 
 	private HashMap<String, ClientData> clientMap;
 	private LinkedList<Topic> topicList;
 	private long maxLifeSpan;
-	private int maxQueueLength;
 	private EventManager eventManager;
 	private static Server instance;
 	private volatile boolean serverIsOn;
@@ -37,17 +37,13 @@ public class Server implements Sender {
 		}
 		return true;
 	};
-
-
-
-
 	
 	private Server() {
 		clientMap = new HashMap<>();
 		topicList = new LinkedList<Topic>();
 		eventManager = EventManager.getInstance();
-		serverIsOn = true;
-
+		serverIsOn = DEFAULT_SERVER_STATE;
+		maxLifeSpan = DEFAULT_LIFE_SPAN;
 	}
 	
 	public static Server getInstance() {
@@ -62,14 +58,12 @@ public class Server implements Sender {
 			topicList = (LinkedList<Topic>)topicList.stream()
 					.filter(topicIsAlivePredicate)
 					.collect(Collectors.toList());
-
 			topicList.stream().forEach(topic -> eventManager.publishTopic(topic));
-
 			clientMap.entrySet().stream().forEach(item -> {
 				ClientData data = item.getValue();
 				Client client = data.getClient();
-				SimpleMessage message = data.popMessageFromQueue();
-				client.receive(message);
+				LinkedList<SimpleMessage> messageList = data.popMessagesFromQueue();
+				messageList.stream().forEach(message -> client.receive(message));
 			});
 		}
 	}
@@ -78,10 +72,9 @@ public class Server implements Sender {
 		this.eventManager.subscribe(subscriber, tag);
 	}
 
-	public void setup(Date maxDate, int maxQueue){
-			this.maxLifeSpan = DEFAULT_LIFE_SPAN;
-			this.maxQueueLength = DEFAULT_MAX_LENGTH;
-
+	public void setup(int maxLifeSpan, int maxLength){
+		this.maxLifeSpan = maxLifeSpan;
+		ClientData.setMaxLength(maxLength);
 	}
 
 	public void publishTopic(Topic topic){
@@ -97,17 +90,11 @@ public class Server implements Sender {
 		clientMap.remove(client.getUsername());
 	}
 
-
-
-
 	@Override
 	public void send(SimpleMessage message) {
 		if(clientMap.containsKey(message.getReceiverUserId())){
 			ClientData clientData = clientMap.get(message.getReceiverUserId());
-			int length = clientData.getQueueLength();
-			if(length < maxQueueLength){
-				clientData.addMessageToQueue(message);
-			}
+			clientData.addMessageToQueue(message);
 		}
 	}
 
