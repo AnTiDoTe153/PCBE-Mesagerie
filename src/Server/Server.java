@@ -56,14 +56,14 @@ public class Server implements Sender {
 		return instance;
 	}
 
-	private void serve(){
+	public void serve(){
 		while(serverIsOn){
 			//This part is for topics
 			try{
 				topicsLock.acquire();
 				topicList = (LinkedList<Topic>)topicList.stream()
 						.filter(topicIsAlivePredicate)
-						.collect(Collectors.toList());
+						.collect(Collectors.toCollection(LinkedList::new));
 				topicList.stream().forEach(topic -> eventManager.publishTopic(topic));
 			}catch(InterruptedException e){
 				e.printStackTrace();
