@@ -27,7 +27,7 @@ public class EventManager {
         }
     }
 
-    public void subscribe(TopicSubscriber subscriber, String topicType){
+    public synchronized void subscribe(TopicSubscriber subscriber, String topicType){
         if(!subscriberMap.containsKey(topicType)){
             subscriberMap.put(topicType, new LinkedList<>());
         }

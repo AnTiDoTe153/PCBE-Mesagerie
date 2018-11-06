@@ -5,6 +5,7 @@ import Message.SimpleMessage;
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 
+//This class is supposedly thread safe
 public class ClientData {
     private static int maxLength = 10;
     private static Semaphore mutex = new Semaphore(1, true);

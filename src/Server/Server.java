@@ -9,6 +9,7 @@ import Message.SimpleMessage;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.Semaphore;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ public class Server implements Sender {
 	private EventManager eventManager;
 	private static Server instance;
 	private volatile boolean serverIsOn;
+	private Semaphore topicsLock;
 
 	private Predicate<Topic> topicIsAlivePredicate = topic -> {
 		Date now = new Date();
@@ -44,6 +46,7 @@ public class Server implements Sender {
 		eventManager = EventManager.getInstance();
 		serverIsOn = DEFAULT_SERVER_STATE;
 		maxLifeSpan = DEFAULT_LIFE_SPAN;
+		topicsLock = new Semaphore(1, true);
 	}
 	
 	public static Server getInstance() {
@@ -55,16 +58,35 @@ public class Server implements Sender {
 
 	private void serve(){
 		while(serverIsOn){
-			topicList = (LinkedList<Topic>)topicList.stream()
-					.filter(topicIsAlivePredicate)
-					.collect(Collectors.toList());
-			topicList.stream().forEach(topic -> eventManager.publishTopic(topic));
+			//This part is for topics
+			try{
+				topicsLock.acquire();
+				topicList = (LinkedList<Topic>)topicList.stream()
+						.filter(topicIsAlivePredicate)
+						.collect(Collectors.toList());
+				topicList.stream().forEach(topic -> eventManager.publishTopic(topic));
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}finally{
+				topicsLock.release();
+			}
+
+
+			//This part is with message queue
 			clientMap.entrySet().stream().forEach(item -> {
 				ClientData data = item.getValue();
 				Client client = data.getClient();
 				LinkedList<SimpleMessage> messageList = data.popMessagesFromQueue();
 				messageList.stream().forEach(message -> client.receive(message));
 			});
+
+
+			try{
+				Thread.sleep(1000 * 10);
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}
+
 		}
 	}
 
@@ -72,13 +94,22 @@ public class Server implements Sender {
 		this.eventManager.subscribe(subscriber, tag);
 	}
 
-	public void setup(int maxLifeSpan, int maxLength){
+	public synchronized void setup(int maxLifeSpan, int maxLength){
 		this.maxLifeSpan = maxLifeSpan;
 		ClientData.setMaxLength(maxLength);
 	}
 
 	public void publishTopic(Topic topic){
-		topicList.add(topic);
+		try{
+			topicsLock.acquire();
+			topicList.add(topic);
+		}catch(InterruptedException e){
+			e.printStackTrace();
+		}finally{
+			topicsLock.release();
+		}
+
+
 	}
 
 	public void logIn(Client client){
